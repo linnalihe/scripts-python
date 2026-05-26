@@ -6,7 +6,7 @@ Interactively renames image and video files to a consistent format:
 YYYY-MM-<img|vid>-<camera-slug>-<original-filename>.<ext>
 ```
 
-Example: `2024-03-img-apple-iphone-15-pro-DSC_0042.jpg`
+Example: `2024-03-img-appleiphone15pro-DSC_0042.jpg`
 
 ## Requirements
 
@@ -14,13 +14,9 @@ Example: `2024-03-img-apple-iphone-15-pro-DSC_0042.jpg`
 - [Pillow](https://pillow.readthedocs.io/) — for reading image EXIF data
 - [ffprobe](https://ffmpeg.org/ffprobe.html) — for reading video metadata (part of FFmpeg)
 
-Install Python dependencies:
+## Setup
 
-```bash
-pip install Pillow
-```
-
-Install FFmpeg (includes ffprobe):
+**1. Install FFmpeg** (includes ffprobe):
 
 ```bash
 # macOS
@@ -28,6 +24,23 @@ brew install ffmpeg
 
 # Ubuntu / Debian
 sudo apt install ffmpeg
+```
+
+**2. Create and activate a virtual environment:**
+
+```bash
+# Create the environment (once)
+python3 -m venv .venv
+
+# Activate it (every new terminal session)
+source .venv/bin/activate   # macOS / Linux
+.venv\Scripts\activate      # Windows
+```
+
+**3. Install Python dependencies:**
+
+```bash
+pip install Pillow
 ```
 
 ## Running the script
