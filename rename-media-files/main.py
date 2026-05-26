@@ -69,9 +69,9 @@ def get_video_metadata(filepath):
         )
         dt = None
         if date_str:
-            for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            for fmt, n in [("%Y-%m-%dT%H:%M:%S", 19), ("%Y-%m-%d %H:%M:%S", 19), ("%Y-%m-%d", 10)]:
                 try:
-                    dt = datetime.strptime(date_str[:19], fmt[:len(date_str[:19])])
+                    dt = datetime.strptime(date_str[:n], fmt)
                     break
                 except ValueError:
                     pass
