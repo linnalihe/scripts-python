@@ -69,9 +69,9 @@ def get_video_metadata(filepath):
         )
         dt = None
         if date_str:
-            for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            for fmt, n in [("%Y-%m-%dT%H:%M:%S", 19), ("%Y-%m-%d %H:%M:%S", 19), ("%Y-%m-%d", 10)]:
                 try:
-                    dt = datetime.strptime(date_str[:19], fmt[:len(date_str[:19])])
+                    dt = datetime.strptime(date_str[:n], fmt)
                     break
                 except ValueError:
                     pass
@@ -98,11 +98,9 @@ def get_video_metadata(filepath):
 
 
 def sanitize(text):
-    """Lowercase, replace spaces/special chars with hyphens, collapse multiples."""
+    """Lowercase and strip all non-alphanumeric characters."""
     text = text.lower()
-    text = re.sub(r"[^\w]+", "-", text)
-    text = re.sub(r"-+", "-", text).strip("-")
-    return text
+    return re.sub(r"[^a-z0-9]+", "", text)
 
 
 def get_default_date(filepath, ext, exif, video_date):
