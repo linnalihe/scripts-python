@@ -15,8 +15,9 @@ Linna's goals:
 
 video_projects = [
     "continue working scheduled video: most interesting",
+    "new - video using existing content - travel", 
+    "new - video using existing content - house renovation", 
     "new - video inspired by notes from journal",
-    "new - video using existing photos", 
     "new - video interview with someone in my network (YouTube, Groups, Contacts, LinkedIn, ect)",
 ]
 
@@ -46,12 +47,17 @@ software_projects = [
     "new - build react native using https://github.com/public-apis/",
 ]
 
+category = [
+   "Animals", "Anime", "Anti-Malware", "Art & Design", "Authentication & Authorization", "Blockchain", "Books", "Business", "Calendar", "Cloud Storage & File Sharing", "Continuous Integration", "Cryptocurrency", "Currency Exchange", "Data Validation", "Development", "Dictionaries", "Documents & Productivity", "Email", "Entertainment", "Environment", "Events", "Finance", "Food & Drink", "Games & Comics", "Geocoding", "Government", "Health", "Jobs", "Machine Learning", "Music", "News", "Open Data", "Open Source Projects", "Patent", "Personality", "Phone", "Photography", "Programming", "Science & Math", "Security", "Shopping", "Social", "Sports & Fitness", "Test Data", "Text Analysis", "Tracking", "Transportation", "URL Shorteners", "Vehicle", "Video", "Weather"
+]
+
 
 # A mapping of a user input to a list variable
 TASKMAP = {
     "1": video_projects,
     "2": writing_projects,
     "3": software_projects,
+    "4": category,
  
 }
 
@@ -60,6 +66,7 @@ task_category = input("Please select a task category:\n"
                     " 1. Work on video project (Tue, Thu, Sun) \n"
                     " 2. Work on writing project (Mon, Wed, Fri) \n"
                     " 3. Work on software project (Everyday, Sat)\n"
+                    " 4. Choose a category to focus on \n"
                     )
 
 

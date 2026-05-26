@@ -46,9 +46,10 @@ def format_row(line):
 # Example usage
 if __name__ == "__main__":
     dates_to_format = """
-05/20 ATM Withdrawal ATM OF TAIWAN ICBC TAIPEI, TW  $66.43
-05/27 Electronic Withdrawal Internet transfer to JPMORGAN CHASE BANK, NA Checking account 921386595 of LINNA LI $97,000.00
-05/30 Interest Paid $3.49
+06/17 Jun 09 Deposit Activity 3,227.08 
+06/07 Deposit Internet - Transfer from 591970001 CK 3,000.00
+06/30 Withdrawal Transferring - mortgage for 2025-07 -3,000.00
+06/30 Credit Interest 33.83
     """
 
     for line in dates_to_format.split('\n'):
