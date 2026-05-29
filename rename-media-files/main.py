@@ -111,6 +111,8 @@ def get_default_date(filepath, ext, exif, video_date):
 
 # --- Main ---
 folder = input("Folder path (or Enter for current dir): ").strip() or "."
+album_raw = input("Album name (or Enter to skip): ").strip()
+album_slug = sanitize(album_raw) if album_raw else "albumnone"
 dry_run = input("Dry run? (Y/n): ").strip().lower() != "n"
 
 files = sorted(
@@ -149,7 +151,7 @@ for filename in files:
     year_month = default_dt.strftime("%Y-%m")
     camera_slug = sanitize(default_camera or "unknown")
 
-    new_name = f"{year_month}-{filetype}-{camera_slug}-{filename}"
+    new_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{filename}"
     new_path = os.path.join(folder, new_name)
 
     if dry_run:
