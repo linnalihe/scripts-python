@@ -8,13 +8,14 @@ YYYY-MM-<img|vid>-<camera-slug>-<album>-<original-filename>.<ext>
 
 Example: `2026-05-img-appleiphone15pro-eurotrip2026-DSC_0042.jpg`
 
-Date and camera are read automatically from file metadata (EXIF for images, ffprobe for videos), falling back to file modification date and `unknown` respectively. If no album is provided, it defaults to `albumnone`.
+Date and camera are read automatically from file metadata (EXIF via Pillow for standard images, exiftool for HEIC/ARW, ffprobe for videos), falling back to file modification date and `unknown` respectively. If no album is provided, it defaults to `albumnone`.
 
 ## Requirements
 
 - Python 3.8+
-- [Pillow](https://pillow.readthedocs.io/) — for reading image EXIF data
+- [Pillow](https://pillow.readthedocs.io/) — for reading EXIF data from standard image formats
 - [ffprobe](https://ffmpeg.org/ffprobe.html) — for reading video metadata (part of FFmpeg)
+- [exiftool](https://exiftool.org/) — for reading metadata from HEIC and ARW files
 
 ## Setup
 
@@ -28,7 +29,17 @@ brew install ffmpeg
 sudo apt install ffmpeg
 ```
 
-**2. Create and activate a virtual environment:**
+**2. Install exiftool:**
+
+```bash
+# macOS
+brew install exiftool
+
+# Ubuntu / Debian
+sudo apt install libimage-exiftool-perl
+```
+
+**3. Create and activate a virtual environment:**
 
 ```bash
 # Create the environment (once)
@@ -39,7 +50,7 @@ source .venv/bin/activate   # macOS / Linux
 .venv\Scripts\activate      # Windows
 ```
 
-**3. Install Python dependencies:**
+**4. Install Python dependencies:**
 
 ```bash
 pip install Pillow
@@ -59,8 +70,6 @@ You will be prompted three times before any files are processed:
 2. **Album name** — a label for this batch (e.g. `Euro Trip 2026`). Press Enter to use `albumnone`.
 3. **Dry run** — press Enter (or `Y`) to preview renames without changing anything. Type `n` to rename for real.
 
-Files whose names already match the `YYYY-MM-(img|vid)-` pattern are skipped automatically.
-
 ## Running directly inside the target directory
 
 ```bash
@@ -71,7 +80,8 @@ python /path/to/rename-media-files/main.py
 
 ## Supported formats
 
-| Type   | Extensions |
-|--------|-----------|
-| Images | `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` `.heic` |
-| Videos | `.mp4` `.mov` `.avi` `.mkv` `.wmv` `.flv` `.m4v` |
+| Type        | Extensions |
+|-------------|-----------|
+| Images      | `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` |
+| RAW / HEIC  | `.heic` `.arw` |
+| Videos      | `.mp4` `.mov` `.avi` `.mkv` `.wmv` `.flv` `.m4v` |

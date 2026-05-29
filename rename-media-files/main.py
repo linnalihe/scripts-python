@@ -6,9 +6,10 @@ from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
 
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".heic"}
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
+EXIFTOOL_EXTS = {".heic", ".arw"}
 VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".m4v"}
-TARGET_EXTS = IMAGE_EXTS | VIDEO_EXTS
+TARGET_EXTS = IMAGE_EXTS | EXIFTOOL_EXTS | VIDEO_EXTS
 RENAMED_PATTERN = re.compile(r"^\d{4}-\d{2}-(img|vid)-[a-z0-9]+-[a-z0-9]+-(.+)$")
 
 
@@ -100,6 +101,41 @@ def get_video_metadata(filepath):
         raise RuntimeError(f"ffprobe failed: {e}") from e
 
 
+def get_exiftool_metadata(filepath):
+    """Use exiftool to extract date and camera from HEIC/ARW files."""
+    try:
+        result = subprocess.run(
+            ["exiftool", "-j", "-Make", "-Model", "-DateTimeOriginal", filepath],
+            capture_output=True, text=True
+        )
+        data = json.loads(result.stdout)
+        if not data:
+            return None, None
+        tags = data[0]
+
+        date_str = tags.get("DateTimeOriginal")
+        dt = None
+        if date_str:
+            try:
+                dt = datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
+            except ValueError:
+                pass
+
+        make = tags.get("Make", "").strip()
+        model = tags.get("Model", "").strip()
+        if make and model.lower().startswith(make.lower()):
+            camera = model
+        else:
+            camera = f"{make} {model}".strip() or None
+
+        return dt, camera
+
+    except FileNotFoundError:
+        return None, None
+    except (json.JSONDecodeError, Exception) as e:
+        raise RuntimeError(f"exiftool failed: {e}") from e
+
+
 def sanitize(text):
     """Lowercase and strip all non-alphanumeric characters. Returns 'unknown' if result is empty."""
     text = text.lower()
@@ -136,7 +172,7 @@ for filename in files:
     name, ext = os.path.splitext(filename)
     ext_lower = ext.lower()
     filepath = os.path.join(folder, filename)
-    filetype = "img" if ext_lower in IMAGE_EXTS else "vid"
+    filetype = "img" if ext_lower in IMAGE_EXTS | EXIFTOOL_EXTS else "vid"
 
     print(f"[FILE] {filename}")
 
@@ -146,7 +182,14 @@ for filename in files:
         name = match.group(2)
 
     # Gather metadata and rename
-    if filetype == "img":
+    if ext_lower in EXIFTOOL_EXTS:
+        try:
+            exiftool_dt, default_camera = get_exiftool_metadata(filepath)
+        except RuntimeError as e:
+            print(f"  ⚠️  Skipping — {e}\n")
+            continue
+        default_dt = exiftool_dt or datetime.fromtimestamp(os.path.getmtime(filepath))
+    elif filetype == "img":
         exif = get_exif_data(filepath)
         default_dt = get_default_date(filepath, ext_lower, exif, None)
         default_camera = get_image_camera(exif)
