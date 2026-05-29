@@ -14,8 +14,8 @@ TARGET_EXTS = IMAGE_EXTS | VIDEO_EXTS
 def get_exif_data(filepath):
     """Return dict of relevant EXIF fields, or {}."""
     try:
-        img = Image.open(filepath)
-        exif = img._getexif()
+        with Image.open(filepath) as img:
+            exif = img._getexif()
         if not exif:
             return {}
         return {TAGS.get(tag, tag): val for tag, val in exif.items()}
@@ -93,14 +93,16 @@ def get_video_metadata(filepath):
 
         return dt, camera
 
-    except (FileNotFoundError, json.JSONDecodeError):
+    except FileNotFoundError:
         return None, None
+    except (json.JSONDecodeError, Exception) as e:
+        raise RuntimeError(f"ffprobe failed: {e}") from e
 
 
 def sanitize(text):
-    """Lowercase and strip all non-alphanumeric characters."""
+    """Lowercase and strip all non-alphanumeric characters. Returns 'unknown' if result is empty."""
     text = text.lower()
-    return re.sub(r"[^a-z0-9]+", "", text)
+    return re.sub(r"[^a-z0-9]+", "", text) or "unknown"
 
 
 def get_default_date(filepath, ext, exif, video_date):
@@ -111,6 +113,9 @@ def get_default_date(filepath, ext, exif, video_date):
 
 # --- Main ---
 folder = input("Folder path (or Enter for current dir): ").strip() or "."
+if not os.path.isdir(folder):
+    print(f"Error: '{folder}' is not a valid directory.")
+    exit(1)
 album_raw = input("Album name (or Enter to skip): ").strip()
 album_slug = sanitize(album_raw) if album_raw else "albumnone"
 dry_run = input("Dry run? (Y/n): ").strip().lower() != "n"
@@ -133,7 +138,7 @@ for filename in files:
     filetype = "img" if ext_lower in IMAGE_EXTS else "vid"
 
     # Skip already-renamed files
-    if re.match(r"^\d{4}-\d{2}-(img|vid)-", filename):
+    if re.match(r"^\d{4}-\d{2}-(img|vid)-[a-z0-9]+-[a-z0-9]+-", filename):
         print(f"[SKIP] {filename}  (already renamed)\n")
         continue
 
@@ -145,14 +150,24 @@ for filename in files:
         default_dt = get_default_date(filepath, ext_lower, exif, None)
         default_camera = get_image_camera(exif)
     else:
-        video_dt, default_camera = get_video_metadata(filepath)
+        try:
+            video_dt, default_camera = get_video_metadata(filepath)
+        except RuntimeError as e:
+            print(f"  ⚠️  Skipping — {e}\n")
+            continue
         default_dt = get_default_date(filepath, ext_lower, {}, video_dt)
 
     year_month = default_dt.strftime("%Y-%m")
     camera_slug = sanitize(default_camera or "unknown")
 
-    new_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{filename}"
+    base_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{name}"
+    new_name = f"{base_name}{ext}"
     new_path = os.path.join(folder, new_name)
+    counter = 1
+    while os.path.exists(new_path):
+        new_name = f"{base_name}-{counter}{ext}"
+        new_path = os.path.join(folder, new_name)
+        counter += 1
 
     if dry_run:
         print(f"  → DRY RUN: {filename}\n         →  {new_name}\n")
