@@ -9,6 +9,7 @@ from PIL.ExifTags import TAGS
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".heic"}
 VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".m4v"}
 TARGET_EXTS = IMAGE_EXTS | VIDEO_EXTS
+RENAMED_PATTERN = re.compile(r"^\d{4}-\d{2}-(img|vid)-[a-z0-9]+-[a-z0-9]+-(.+)$")
 
 
 def get_exif_data(filepath):
@@ -139,35 +140,53 @@ for filename in files:
 
     print(f"[FILE] {filename}")
 
-    # Gather metadata
-    if filetype == "img":
-        exif = get_exif_data(filepath)
-        default_dt = get_default_date(filepath, ext_lower, exif, None)
-        default_camera = get_image_camera(exif)
-    else:
-        try:
-            video_dt, default_camera = get_video_metadata(filepath)
-        except RuntimeError as e:
-            print(f"  ⚠️  Skipping — {e}\n")
-            continue
-        default_dt = get_default_date(filepath, ext_lower, {}, video_dt)
-
-    year_month = default_dt.strftime("%Y-%m")
-    camera_slug = sanitize(default_camera or "unknown")
-
-    base_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{name}"
-    new_name = f"{base_name}{ext}"
-    new_path = os.path.join(folder, new_name)
-    counter = 1
-    while os.path.exists(new_path):
-        new_name = f"{base_name}-{counter}{ext}"
+    match = RENAMED_PATTERN.match(name)
+    if match:
+        # Revert to original filename (last segment)
+        orig_stem = match.group(2)
+        new_name = orig_stem + ext
         new_path = os.path.join(folder, new_name)
-        counter += 1
+        counter = 1
+        while os.path.exists(new_path):
+            new_name = f"{orig_stem}-{counter}{ext}"
+            new_path = os.path.join(folder, new_name)
+            counter += 1
 
-    if dry_run:
-        print(f"  → DRY RUN: {filename}\n         →  {new_name}\n")
+        if dry_run:
+            print(f"  → DRY RUN (revert): {filename}\n         →  {new_name}\n")
+        else:
+            os.rename(filepath, new_path)
+            print(f"  → REVERTED: {filename}\n        →  {new_name}\n")
     else:
-        os.rename(filepath, new_path)
-        print(f"  → RENAMED: {filename}\n        →  {new_name}\n")
+        # Gather metadata and rename
+        if filetype == "img":
+            exif = get_exif_data(filepath)
+            default_dt = get_default_date(filepath, ext_lower, exif, None)
+            default_camera = get_image_camera(exif)
+        else:
+            try:
+                video_dt, default_camera = get_video_metadata(filepath)
+            except RuntimeError as e:
+                print(f"  ⚠️  Skipping — {e}\n")
+                continue
+            default_dt = get_default_date(filepath, ext_lower, {}, video_dt)
+
+        year_month = default_dt.strftime("%Y-%m")
+        camera_slug = sanitize(default_camera or "unknown")
+
+        base_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{name}"
+        new_name = f"{base_name}{ext}"
+        new_path = os.path.join(folder, new_name)
+        counter = 1
+        while os.path.exists(new_path):
+            new_name = f"{base_name}-{counter}{ext}"
+            new_path = os.path.join(folder, new_name)
+            counter += 1
+
+        if dry_run:
+            print(f"  → DRY RUN: {filename}\n         →  {new_name}\n")
+        else:
+            os.rename(filepath, new_path)
+            print(f"  → RENAMED: {filename}\n        →  {new_name}\n")
 
 print("Done!" + (" (dry run — no files changed)" if dry_run else ""))
