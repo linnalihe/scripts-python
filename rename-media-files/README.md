@@ -1,12 +1,14 @@
 # rename-media-files
 
-Interactively renames image and video files to a consistent format:
+Renames image and video files to a consistent format:
 
 ```
-YYYY-MM-<img|vid>-<camera-slug>-<original-filename>.<ext>
+YYYY-MM-<img|vid>-<camera-slug>-<album>-<original-filename>.<ext>
 ```
 
-Example: `2024-03-img-appleiphone15pro-DSC_0042.jpg`
+Example: `2026-05-img-appleiphone15pro-eurotrip2026-DSC_0042.jpg`
+
+Date and camera are read automatically from file metadata (EXIF for images, ffprobe for videos), falling back to file modification date and `unknown` respectively. If no album is provided, it defaults to `albumnone`.
 
 ## Requirements
 
@@ -51,13 +53,11 @@ Run the script from anywhere — it will ask you for the folder to process:
 python main.py
 ```
 
-You will be prompted:
+You will be prompted three times before any files are processed:
 
-1. **Folder path** — enter the path to the directory containing your files, or press Enter to use the current directory.
-2. **Dry run** — press Enter (or `Y`) to preview renames without changing anything. Type `n` to rename for real.
-3. **Per file** — for each file, confirm or override:
-   - **Date** — shown as `YYYY-MM`, sourced from EXIF/video metadata or file modification date.
-   - **Camera source** — sourced from EXIF/video metadata (e.g. `Apple iPhone 15 Pro`).
+1. **Folder path** — path to the directory containing your files, or press Enter to use the current directory.
+2. **Album name** — a label for this batch (e.g. `Euro Trip 2026`). Press Enter to use `albumnone`.
+3. **Dry run** — press Enter (or `Y`) to preview renames without changing anything. Type `n` to rename for real.
 
 Files whose names already match the `YYYY-MM-(img|vid)-` pattern are skipped automatically.
 
