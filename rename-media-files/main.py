@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import shutil
 import subprocess
 from datetime import datetime
 from PIL import Image
@@ -131,7 +132,7 @@ def get_exiftool_metadata(filepath):
         return dt, camera
 
     except FileNotFoundError:
-        raise RuntimeError("exiftool not found — install it to process HEIC/ARW files (see README)")
+        return None, None
     except (json.JSONDecodeError, Exception) as e:
         raise RuntimeError(f"exiftool failed: {e}") from e
 
@@ -165,6 +166,12 @@ files = sorted(
 if not files:
     print("No image/video files found.")
     exit()
+
+needs_exiftool = any(os.path.splitext(f)[1].lower() in EXIFTOOL_EXTS for f in files)
+if needs_exiftool and shutil.which("exiftool") is None:
+    print("⚠️  Warning: exiftool is not installed but HEIC/ARW files were found.")
+    print("   Install it first, then re-run the script. See README for instructions.")
+    exit(1)
 
 print(f"\nFound {len(files)} file(s).\n")
 
