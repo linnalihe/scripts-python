@@ -109,27 +109,10 @@ def get_default_date(filepath, ext, exif, video_date):
     return video_date or datetime.fromtimestamp(os.path.getmtime(filepath))
 
 
-def prompt_year_month(default_dt, source):
-    default_str = default_dt.strftime("%Y-%m")
-    while True:
-        answer = input(f"  Date [{source} default: {default_str}]: ").strip()
-        if answer == "":
-            return default_str
-        if re.fullmatch(r"\d{4}-\d{2}", answer):
-            year, month = map(int, answer.split("-"))
-            if 1 <= month <= 12:
-                return answer
-        print("  ⚠️  Invalid — use YYYY-MM (e.g. 2024-03)")
-
-
-def prompt_camera(default_camera):
-    default_str = default_camera or "unknown"
-    answer = input(f"  Camera source [default: {default_str}]: ").strip()
-    return answer if answer else default_str
-
-
 # --- Main ---
 folder = input("Folder path (or Enter for current dir): ").strip() or "."
+album_raw = input("Album name (or Enter to skip): ").strip()
+album_slug = sanitize(album_raw) if album_raw else "albumnone"
 dry_run = input("Dry run? (Y/n): ").strip().lower() != "n"
 
 files = sorted(
@@ -161,18 +144,14 @@ for filename in files:
         exif = get_exif_data(filepath)
         default_dt = get_default_date(filepath, ext_lower, exif, None)
         default_camera = get_image_camera(exif)
-        date_source = "EXIF" if get_image_date(exif) else "file date"
     else:
         video_dt, default_camera = get_video_metadata(filepath)
         default_dt = get_default_date(filepath, ext_lower, {}, video_dt)
-        date_source = "video metadata" if video_dt else "file date"
 
-    # Prompt user
-    year_month = prompt_year_month(default_dt, date_source)
-    camera_raw = prompt_camera(default_camera)
-    camera_slug = sanitize(camera_raw)
+    year_month = default_dt.strftime("%Y-%m")
+    camera_slug = sanitize(default_camera or "unknown")
 
-    new_name = f"{year_month}-{filetype}-{camera_slug}-{filename}"
+    new_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{filename}"
     new_path = os.path.join(folder, new_name)
 
     if dry_run:
