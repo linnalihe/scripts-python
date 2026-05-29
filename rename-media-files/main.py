@@ -117,7 +117,7 @@ def get_exiftool_metadata(filepath):
         dt = None
         if date_str:
             try:
-                dt = datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
+                dt = datetime.strptime(date_str[:19], "%Y:%m:%d %H:%M:%S")
             except ValueError:
                 pass
 
@@ -131,7 +131,7 @@ def get_exiftool_metadata(filepath):
         return dt, camera
 
     except FileNotFoundError:
-        return None, None
+        raise RuntimeError("exiftool not found — install it to process HEIC/ARW files (see README)")
     except (json.JSONDecodeError, Exception) as e:
         raise RuntimeError(f"exiftool failed: {e}") from e
 
