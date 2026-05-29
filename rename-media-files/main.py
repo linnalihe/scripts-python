@@ -9,6 +9,7 @@ from PIL.ExifTags import TAGS
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".heic"}
 VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".m4v"}
 TARGET_EXTS = IMAGE_EXTS | VIDEO_EXTS
+RENAMED_PATTERN = re.compile(r"^\d{4}-\d{2}-(img|vid)-[a-z0-9]+-[a-z0-9]+-(.+)$")
 
 
 def get_exif_data(filepath):
@@ -139,7 +140,12 @@ for filename in files:
 
     print(f"[FILE] {filename}")
 
-    # Gather metadata
+    # If already renamed, extract the original filename as the base
+    match = RENAMED_PATTERN.match(name)
+    if match:
+        name = match.group(2)
+
+    # Gather metadata and rename
     if filetype == "img":
         exif = get_exif_data(filepath)
         default_dt = get_default_date(filepath, ext_lower, exif, None)
