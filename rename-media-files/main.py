@@ -140,53 +140,40 @@ for filename in files:
 
     print(f"[FILE] {filename}")
 
+    # If already renamed, extract the original filename as the base
     match = RENAMED_PATTERN.match(name)
     if match:
-        # Revert to original filename (last segment)
-        orig_stem = match.group(2)
-        new_name = orig_stem + ext
-        new_path = os.path.join(folder, new_name)
-        counter = 1
-        while os.path.exists(new_path):
-            new_name = f"{orig_stem}-{counter}{ext}"
-            new_path = os.path.join(folder, new_name)
-            counter += 1
+        name = match.group(2)
 
-        if dry_run:
-            print(f"  → DRY RUN (revert): {filename}\n         →  {new_name}\n")
-        else:
-            os.rename(filepath, new_path)
-            print(f"  → REVERTED: {filename}\n        →  {new_name}\n")
+    # Gather metadata and rename
+    if filetype == "img":
+        exif = get_exif_data(filepath)
+        default_dt = get_default_date(filepath, ext_lower, exif, None)
+        default_camera = get_image_camera(exif)
     else:
-        # Gather metadata and rename
-        if filetype == "img":
-            exif = get_exif_data(filepath)
-            default_dt = get_default_date(filepath, ext_lower, exif, None)
-            default_camera = get_image_camera(exif)
-        else:
-            try:
-                video_dt, default_camera = get_video_metadata(filepath)
-            except RuntimeError as e:
-                print(f"  ⚠️  Skipping — {e}\n")
-                continue
-            default_dt = get_default_date(filepath, ext_lower, {}, video_dt)
+        try:
+            video_dt, default_camera = get_video_metadata(filepath)
+        except RuntimeError as e:
+            print(f"  ⚠️  Skipping — {e}\n")
+            continue
+        default_dt = get_default_date(filepath, ext_lower, {}, video_dt)
 
-        year_month = default_dt.strftime("%Y-%m")
-        camera_slug = sanitize(default_camera or "unknown")
+    year_month = default_dt.strftime("%Y-%m")
+    camera_slug = sanitize(default_camera or "unknown")
 
-        base_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{name}"
-        new_name = f"{base_name}{ext}"
+    base_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{name}"
+    new_name = f"{base_name}{ext}"
+    new_path = os.path.join(folder, new_name)
+    counter = 1
+    while os.path.exists(new_path):
+        new_name = f"{base_name}-{counter}{ext}"
         new_path = os.path.join(folder, new_name)
-        counter = 1
-        while os.path.exists(new_path):
-            new_name = f"{base_name}-{counter}{ext}"
-            new_path = os.path.join(folder, new_name)
-            counter += 1
+        counter += 1
 
-        if dry_run:
-            print(f"  → DRY RUN: {filename}\n         →  {new_name}\n")
-        else:
-            os.rename(filepath, new_path)
-            print(f"  → RENAMED: {filename}\n        →  {new_name}\n")
+    if dry_run:
+        print(f"  → DRY RUN: {filename}\n         →  {new_name}\n")
+    else:
+        os.rename(filepath, new_path)
+        print(f"  → RENAMED: {filename}\n        →  {new_name}\n")
 
 print("Done!" + (" (dry run — no files changed)" if dry_run else ""))
