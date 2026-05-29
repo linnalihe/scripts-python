@@ -137,11 +137,6 @@ for filename in files:
     filepath = os.path.join(folder, filename)
     filetype = "img" if ext_lower in IMAGE_EXTS else "vid"
 
-    # Skip already-renamed files
-    if re.match(r"^\d{4}-\d{2}-(img|vid)-[a-z0-9]+-[a-z0-9]+-", filename):
-        print(f"[SKIP] {filename}  (already renamed)\n")
-        continue
-
     print(f"[FILE] {filename}")
 
     # Gather metadata
