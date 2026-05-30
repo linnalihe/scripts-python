@@ -156,6 +156,7 @@ if not os.path.isdir(folder):
     exit(1)
 album_raw = input("Album name (or Enter to skip): ").strip()
 album_slug = sanitize(album_raw) if album_raw else "albumnone"
+use_counter = input("Use counter for filenames? (y/N): ").strip().lower() == "y"
 dry_run = input("Dry run? (Y/n): ").strip().lower() != "n"
 
 files = sorted(
@@ -175,6 +176,7 @@ if needs_exiftool and shutil.which("exiftool") is None:
 
 print(f"\nFound {len(files)} file(s).\n")
 
+file_counter = 1
 for filename in files:
     name, ext = os.path.splitext(filename)
     ext_lower = ext.lower()
@@ -210,20 +212,23 @@ for filename in files:
 
     year_month = default_dt.strftime("%Y-%m")
     camera_slug = sanitize(default_camera or "unknown")
+    file_stem = f"{filetype}{file_counter:05d}" if use_counter else name
 
-    base_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{name}"
+    base_name = f"{year_month}-{filetype}-{camera_slug}-{album_slug}-{file_stem}"
     new_name = f"{base_name}{ext}"
     new_path = os.path.join(folder, new_name)
-    counter = 1
+    suffix = 1
     while os.path.exists(new_path):
-        new_name = f"{base_name}-{counter}{ext}"
+        new_name = f"{base_name}-{suffix}{ext}"
         new_path = os.path.join(folder, new_name)
-        counter += 1
+        suffix += 1
 
     if dry_run:
         print(f"  → DRY RUN: {filename}\n         →  {new_name}\n")
     else:
         os.rename(filepath, new_path)
         print(f"  → RENAMED: {filename}\n        →  {new_name}\n")
+
+    file_counter += 1
 
 print("Done!" + (" (dry run — no files changed)" if dry_run else ""))
